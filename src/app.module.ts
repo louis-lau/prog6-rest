@@ -1,11 +1,24 @@
 import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
 
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
+import { Movie } from './movies/movie.entity'
+import { MoviesModule } from './movies/movies.module'
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mongodb',
+      url: 'mongodb://localhost:27017/prog6',
+      keepConnectionAlive: true,
+      entities: [Movie],
+      synchronize: true,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      appname: 'prog6',
+    }),
+    MoviesModule,
+  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
