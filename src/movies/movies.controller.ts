@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   Options,
+  Param,
   Post,
   Request,
 } from '@nestjs/common'
@@ -11,6 +13,7 @@ import { ApiTags } from '@nestjs/swagger'
 
 import { AddMovieDto } from './dto/add-movie.dto'
 import { MovieCollectionDto } from './dto/movie-collection.dto'
+import { MovieIdParamsDto } from './dto/movie-id-params.dto'
 import { MovieItemDto } from './dto/movie-item.dto'
 import { Movie } from './movie.entity'
 import { MoviesService } from './movies.service'
@@ -32,10 +35,10 @@ export class MoviesController {
     for (const movie of movies) {
       movie._links = {
         self: {
-          href: `https://${req.host}/movies/${movie._id}`,
+          href: `https://${req.hostname}/movies/${movie._id}`,
         },
         collection: {
-          href: `https://${req.host}/movies`,
+          href: `https://${req.hostname}/movies`,
         },
       }
     }
@@ -44,7 +47,7 @@ export class MoviesController {
       items: movies,
       _links: {
         self: {
-          href: `https://${req.host}/movies`,
+          href: `https://${req.hostname}/movies`,
         },
       },
       pagination: {
@@ -72,6 +75,26 @@ export class MoviesController {
         },
       },
     }
+  }
+
+  @Get(':id')
+  public async getMovieDetails(
+    @Param() movieIdParamsDto: MovieIdParamsDto,
+    @Request() req,
+  ): Promise<MovieItemDto> {
+    const movie = (await this.moviesService.getOne(
+      movieIdParamsDto.id,
+    )) as MovieItemDto
+    movie._links = {
+      self: {
+        href: `https://${req.hostname}/movies/${movie._id}`,
+      },
+      collection: {
+        href: `https://${req.hostname}/movies`,
+      },
+    }
+
+    return movie
   }
 
   @Post()
