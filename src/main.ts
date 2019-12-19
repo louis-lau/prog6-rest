@@ -1,6 +1,7 @@
-import { ValidationPipe } from '@nestjs/common'
+import { BadRequestException, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { Request } from 'express'
 import * as helmet from 'helmet'
 
 import { AppModule } from './app.module'
@@ -21,6 +22,16 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
     }),
   )
+
+  app.use(function(req: Request, res, next) {
+    if (!req.accepts('json')) {
+      throw new BadRequestException(
+        `Can't serve you ${req.headers.accept}, try application/json`,
+        'InvalidAllowHeader',
+      )
+    }
+    next()
+  })
 
   const swaggerOptions = new DocumentBuilder()
     .setTitle('Prog6 REST API')
