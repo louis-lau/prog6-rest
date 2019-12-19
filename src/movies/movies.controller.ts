@@ -1,16 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Header,
-  HttpCode,
-  Options,
-  Param,
-  Post,
-  Request,
-} from '@nestjs/common'
+import { Body, Controller, Delete, Get, Header, HttpCode, Options, Param, Post, Put, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { Request as ExpressRequest } from 'express'
 
 import { AddMovieDto } from './dto/add-movie.dto'
 import { MovieCollectionDto } from './dto/movie-collection.dto'
@@ -31,17 +21,10 @@ export class MoviesController {
   }
 
   @Get()
-  public async getAllMovies(@Request() req): Promise<MovieCollectionDto> {
+  public async getAllMovies(@Request() req: ExpressRequest): Promise<MovieCollectionDto> {
     const movies: MovieItemDto[] = (await this.moviesService.getAll()) as MovieItemDto[]
-    for (const movie of movies) {
-      movie._links = {
-        self: {
-          href: `https://${req.hostname}/movies/${movie._id}`,
-        },
-        collection: {
-          href: `https://${req.hostname}/movies`,
-        },
-      }
+    for (let movie of movies) {
+      movie = await this.moviesService.movieToMovieItem(movie, req.hostname)
     }
 
     return {
@@ -78,36 +61,32 @@ export class MoviesController {
     }
   }
 
-  @Get(':id')
-  public async getMovieDetails(
-    @Param() movieIdParamsDto: MovieIdParamsDto,
-    @Request() req,
-  ): Promise<MovieItemDto> {
-    const movie = (await this.moviesService.getOne(
-      movieIdParamsDto.id,
-    )) as MovieItemDto
-    movie._links = {
-      self: {
-        href: `https://${req.hostname}/movies/${movie._id}`,
-      },
-      collection: {
-        href: `https://${req.hostname}/movies`,
-      },
-    }
-
-    return movie
-  }
-
   @Post()
   public async addMovie(@Body() movie: AddMovieDto): Promise<Movie> {
     return this.moviesService.add(movie)
   }
 
+  @Get(':id')
+  public async getMovieDetails(@Param() movieIdParamsDto: MovieIdParamsDto, @Request() req): Promise<MovieItemDto> {
+    const movie = await this.moviesService.getOne(movieIdParamsDto.id)
+    return this.moviesService.movieToMovieItem(movie, req.hostname)
+  }
+
+  @Put(':id')
+  public async updateMovie(
+    @Param() movieIdParamsDto: MovieIdParamsDto,
+    @Body() addMovieDto: AddMovieDto,
+    @Request() req: ExpressRequest,
+  ): Promise<MovieItemDto> {
+    const movie = addMovieDto as Movie
+
+    const updatedMovie = await this.moviesService.updateOne(movieIdParamsDto.id, movie)
+    return this.moviesService.movieToMovieItem(updatedMovie, req.hostname)
+  }
+
   @Delete(':id')
   @HttpCode(204)
-  public async deleteMovie(
-    @Param() movieIdParamsDto: MovieIdParamsDto,
-  ): Promise<void> {
+  public async deleteMovie(@Param() movieIdParamsDto: MovieIdParamsDto): Promise<void> {
     return this.moviesService.deleteOne(movieIdParamsDto.id)
   }
 }

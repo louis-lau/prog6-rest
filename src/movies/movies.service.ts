@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { ObjectId } from 'mongodb'
 import { MongoRepository } from 'typeorm'
 
+import { AddMovieDto } from './dto/add-movie.dto'
+import { MovieItemDto } from './dto/movie-item.dto'
 import { Movie } from './movie.entity'
 
 @Injectable()
@@ -12,13 +14,25 @@ export class MoviesService {
     private readonly movieRepository: MongoRepository<Movie>,
   ) {}
 
-  public async add(movie: Movie): Promise<Movie> {
-    const movieInstance = new Movie()
-    movieInstance.title = movie.title
-    movieInstance.description = movie.description
-    movieInstance.director = movie.director
+  public async movieToMovieItem(movie: Movie, hostname: string): Promise<MovieItemDto> {
+    const movieItem = movie as MovieItemDto
+    movieItem._links = {
+      self: {
+        href: `https://${hostname}/movies/${movie._id}`,
+      },
+      collection: {
+        href: `https://${hostname}/movies`,
+      },
+    }
 
-    return this.movieRepository.save(movieInstance)
+    return movieItem
+  }
+
+  public async add(movie: Movie): Promise<Movie> {
+    const movieEntity = new Movie()
+    Object.assign(movieEntity, movie)
+
+    return this.movieRepository.save(movieEntity)
   }
 
   public async getAll(): Promise<Movie[]> {
@@ -26,17 +40,20 @@ export class MoviesService {
   }
 
   public async getOne(id: string): Promise<Movie> {
-    const movie = await this.movieRepository.findOne({
-      where: { _id: new ObjectId(id) },
-    })
+    const movie = await this.movieRepository.findOne({ where: { _id: new ObjectId(id) } })
     if (movie) {
       return movie
     } else {
-      throw new NotFoundException(
-        'No movie found with that id',
-        'MovieNotFoundError',
-      )
+      throw new NotFoundException('No movie found with that id', 'MovieNotFoundError')
     }
+  }
+
+  public async updateOne(id: string, movie: Movie): Promise<Movie> {
+    const movieEntity = new Movie()
+    Object.assign(movieEntity, movie)
+
+    await this.movieRepository.updateOne({ _id: new ObjectId(id) }, { $set: movieEntity })
+    return movieEntity
   }
 
   public async deleteOne(id: string): Promise<void> {
