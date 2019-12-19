@@ -38,4 +38,8 @@ export class MoviesService {
       )
     }
   }
+
+  public async deleteOne(id: string): Promise<void> {
+    this.movieRepository.deleteOne({ _id: new ObjectId(id) })
+  }
 }

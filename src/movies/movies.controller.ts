@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Header,
+  HttpCode,
   Options,
   Param,
   Post,
@@ -100,5 +101,13 @@ export class MoviesController {
   @Post()
   public async addMovie(@Body() movie: AddMovieDto): Promise<Movie> {
     return this.moviesService.add(movie)
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  public async deleteMovie(
+    @Param() movieIdParamsDto: MovieIdParamsDto,
+  ): Promise<void> {
+    return this.moviesService.deleteOne(movieIdParamsDto.id)
   }
 }
