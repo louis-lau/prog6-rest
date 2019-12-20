@@ -16,7 +16,13 @@ export class MoviesController {
 
   @Options()
   @Header('Allow', 'GET,POST,OPTIONS')
-  public options(): void {
+  public collectionOptions(): void {
+    return
+  }
+
+  @Options(':id')
+  @Header('Allow', 'GET,PUT,DELETE,OPTIONS')
+  public DetailOptions(): void {
     return
   }
 

@@ -11,7 +11,8 @@ declare const module: any
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule)
 
-  // app.use(helmet())
+  app.use(helmet())
+
   app.enableCors({
     preflightContinue: true,
     allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
@@ -25,10 +26,7 @@ async function bootstrap(): Promise<void> {
 
   app.use(function(req: Request, res, next) {
     if (!req.accepts('json')) {
-      throw new BadRequestException(
-        `Can't serve you ${req.headers.accept}, try application/json`,
-        'InvalidAllowHeader',
-      )
+      throw new BadRequestException(`Can't serve you ${req.headers.accept}, try application/json`, 'InvalidAllowHeader')
     }
     next()
   })
